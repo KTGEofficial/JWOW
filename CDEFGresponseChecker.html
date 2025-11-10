@@ -205,7 +205,7 @@
             const words = text.trim().split(/\s+/).filter(word => word.match(/[a-z0-9]/i)); const letterCount = countPangramability(text, alphabet)
             let previousCountLetters = 0;
             // Extract the previous count from the innerText of the wordCounter element
-            const previousCount = parseInt(wordCounter.innerText.split(":")[1].trim(), 10) || 0;
+            const previousCount = parseInt(lettersCounter.innerText.split(":")[1].trim(), 10) || 0;
             const match = text.trim().match(/\((\d+)\s*\/\s*\d+\)/);
             if (match) {
                 previousCountLetters = parseInt(match[1], 10);
@@ -319,4 +319,5 @@
     </script>
 </body>
 </html>
+
 
