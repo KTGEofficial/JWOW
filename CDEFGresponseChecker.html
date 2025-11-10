@@ -59,6 +59,21 @@
             }
         }
 
+        @keyframes spinClockwiseTranslateXexcluded {
+            0% {
+                transform: rotateY(0deg);
+            }
+
+            33% {
+                transform: rotateY(90deg);
+                color: lawngreen;
+            }
+
+            100% {
+                transform: rotateY(360deg);
+                color: lawngreen;
+            }
+        }
         @keyframes redClockwise {
             0% {
                 transform: rotateY(0deg);
@@ -108,16 +123,16 @@
 
         @keyframes spinClockwiseNeutral {
             0% {
-                transform: translateX(var(--translate-x)) rotateY(0deg);
+                transform: rotateY(0deg);
             }
 
             66% {
-                transform: translateX(var(--translate-x)) rotateY(90deg);
+                transform: rotateY(90deg);
                 color: white;
             }
 
             100% {
-                transform: translateX(var(--translate-x)) rotateY(360deg);
+                transform: rotateY(360deg);
                 color: white;
             }
         }
@@ -288,7 +303,7 @@
 
   // LETTER thresholds (25 target, allow 26 overflow)
   if (letterCount === 25 && previousCountLetters !== 25) {
-    triggerAnim(lettersCounter, "spinClockwise", "lawngreen");
+    triggerAnim(lettersCounter, "spinClockwiseTranslateXexcluded", "lawngreen");
   } else if (letterCount < 25 && previousCountLetters >= 25) {
     // went from >=25 down to <25
     triggerAnim(lettersCounter, "redCounterclockwise", "red");
@@ -380,6 +395,7 @@
     </script>
 </body>
 </html>
+
 
 
 
