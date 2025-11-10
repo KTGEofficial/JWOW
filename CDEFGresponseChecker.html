@@ -127,7 +127,7 @@
             textFreq: "etaoinshrdlcumwfgypbvkjxqz",
             dictFreq: "esiarntolcdugpmhbyfvkwzxjq",
             ewowFreq: "etoainsrldhumcwygpfbvkxjzq",
-            abcdeFreq: "notreadybcfghijklmpqsuvwxz"
+            abcdeFreq: "eiatsnorlucdgmyhpbfwkvzxjq"
         };
         function parsePrompt(str) {
             const index = str.indexOf(" ");
@@ -203,7 +203,7 @@
         // Update word count
         function updateWordCount(text) {
             const words = text.trim().split(/\s+/).filter(word => word.match(/[a-z0-9]/i)); const letterCount = countPangramability(text, alphabet)
-            let previousCountLetters;
+            let previousCountLetters = 0;
             // Extract the previous count from the innerText of the wordCounter element
             const previousCount = parseInt(wordCounter.innerText.split(":")[1].trim(), 10) || 0;
             const match = text.trim().match(/\((\d+)\s*\/\s*\d+\)/);
@@ -319,3 +319,4 @@
     </script>
 </body>
 </html>
+
