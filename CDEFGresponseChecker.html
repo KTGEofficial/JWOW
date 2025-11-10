@@ -167,7 +167,7 @@
             }
 
             if (isNaN(parseInt(str.slice(0, index), 10))) {
-                if (str.trim().startsWith('E') === True) {
+                if (str.trim().startsWith('E')) {
                     return str;
                 } else {
                     return "Error: Prompt data might be corrupted";
@@ -232,47 +232,54 @@
 
         // Update word count
         function updateWordCount(text) {
-            const words = text.trim().split(/\s+/).filter(word => word.match(/[a-z0-9]/i)); const letterCount = countPangramability(text, alphabet)
-            let previousCountLetters = 0;
-            // Extract the previous count from the innerText of the wordCounter element
-            const previousCount = parseInt(wordCounter.innerText.split(":")[1].trim(), 10) || 0;
-            const match = lettersCounter.innerText.trim().match(/\((\d+)\s*\/\s*\d+\)/);
-            if (match) {
-                previousCountLetters = parseInt(match[1], 10);
-            }
-            // Update the word counter display
-            wordCounter.innerText = `Word count: ${words.length}`; lettersCounter.innerText = `(${letterCount} / 25)`;
+    const words = text.trim().split(/\s+/).filter(word => word.match(/[a-z0-9]/i));
+    const letterCount = countPangramability(text, alphabet);
 
-            // Apply animations based on word count changes
-            if (words.length === 14 && previousCount !== 14) {
-                // Trigger spinClockwise animation
-                wordCounter.style.animation = "spinClockwise 0.5s ease-in-out forwards";
-                setTimeout(() => (wordCounter.style.animation = "none"), 500);
-                wordCounter.style.color = "lawngreen";
-            } else if (words.length < 14 && previousCount >= 14) {
-                wordCounter.style.animation = "spinCounterclockwise 0.5s ease-in-out forwards";
-                wordCounter.style.color = "white";
-                setTimeout(() => (wordCounter.style.animation = "none"), 500);
-            } else if (words.length > 14 && previousCount <= 14) {
-                wordCounter.style.animation = "redClockwise 0.5s ease-in-out forwards";
-                wordCounter.style.color = "red";
-                setTimeout(() => (wordCounter.style.animation = "none"), 500);
-            }
-            if (letterCount === 25 && previousCountLetters !== 25) {
-                // Trigger spinClockwise animation
-                lettersCounter.style.animation = "spinClockwise 0.5s ease-in-out forwards";
-                setTimeout(() => (lettersCounter.style.animation = "none"), 500);
-                lettersCounter.style.color = "lawngreen";
-            } else if (letterCount < 25 && previousCountLetters >= 25) {
-                lettersCounter.style.animation = "redCounterclockwise 0.5s ease-in-out forwards";
-                lettersCounter.style.color = "red";
-                setTimeout(() => (lettersCounter.style.animation = "none"), 500);
-            } else if (letterCount > 25 && previousCountLetters <= 25) {
-                lettersCounter.style.animation = "spinClockwiseNeutral 0.5s ease-in-out forwards";
-                lettersCounter.style.color = "white";
-                setTimeout(() => (lettersCounter.style.animation = "none"), 500);
-            }
-        }
+    // Extract previous word count
+    const previousCount = parseInt(wordCounter.innerText.split(":")[1].trim(), 10) || 0;
+
+    // Extract previous letter count from display
+    let previousCountLetters = 0;
+    const match = lettersCounter.innerText.trim().match(/\((\d+)\s*\/\s*\d+\)/);
+    if (match && match[1]) {
+        previousCountLetters = parseInt(match[1], 10);
+    }
+
+    // Update displays
+    wordCounter.innerText = `Word count: ${words.length}`;
+    lettersCounter.innerText = `(${letterCount} / 25)`;
+
+    // Word count animation logic
+    if (words.length === 14 && previousCount !== 14) {
+        wordCounter.style.animation = "spinClockwise 0.5s ease-in-out forwards";
+        wordCounter.style.color = "lawngreen";
+    } else if (words.length < 14 && previousCount >= 14) {
+        wordCounter.style.animation = "spinCounterclockwise 0.5s ease-in-out forwards";
+        wordCounter.style.color = "white";
+    } else if (words.length > 14 && previousCount <= 14) {
+        wordCounter.style.animation = "redClockwise 0.5s ease-in-out forwards";
+        wordCounter.style.color = "red";
+    }
+
+    // Letter count animation logic
+    if (letterCount === 25 && previousCountLetters !== 25) {
+        lettersCounter.style.animation = "spinClockwise 0.5s ease-in-out forwards";
+        lettersCounter.style.color = "lawngreen";
+    } else if (letterCount < 25 && previousCountLetters >= 25) {
+        lettersCounter.style.animation = "redCounterclockwise 0.5s ease-in-out forwards";
+        lettersCounter.style.color = "red";
+    } else if (letterCount > 25 && previousCountLetters <= 25) {
+        lettersCounter.style.animation = "spinClockwiseNeutral 0.5s ease-in-out forwards";
+        lettersCounter.style.color = "white";
+    }
+
+    // Reset animations after transition
+    setTimeout(() => {
+        wordCounter.style.animation = "none";
+        lettersCounter.style.animation = "none";
+    }, 500);
+}
+
 
         // Reordering letters based on the selected order
         function updateOrder() {
@@ -349,6 +356,7 @@
     </script>
 </body>
 </html>
+
 
 
 
