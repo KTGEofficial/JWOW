@@ -233,44 +233,46 @@
         // Update word count
         function updateWordCount(text) {
   const words = text.trim().split(/\s+/).filter(w => w.match(/[a-z0-9]/i));
-  const letterCountRaw = countPangramability(text, alphabet);
-  const letterCount = letterCountRaw; // allow 26 while showing "/ 25"
+  const letterCount = countPangramability(text, alphabet); // keep 26 allowed
 
-  // previous word count (safe parse)
+  // safe parse previous word count
   const prevWordMatch = (wordCounter.innerText || "").match(/Word count:\s*(\d+)/i);
   const previousCount = prevWordMatch ? parseInt(prevWordMatch[1], 10) : 0;
 
-  // previous letter count (safe parse)
+  // safe parse previous letter count
   let previousCountLetters = 0;
-  const match = (lettersCounter.innerText || "").trim().match(/\((\d+)\s*\/\s*\d+\)/);
-  if (match && match[1]) previousCountLetters = parseInt(match[1], 10);
+  const prevLetterMatch = (lettersCounter.innerText || "").trim().match(/\((\d+)\s*\/\s*\d+\)/);
+  if (prevLetterMatch && prevLetterMatch[1]) previousCountLetters = parseInt(prevLetterMatch[1], 10);
 
-  // update text display (keep your intentional "/ 25" even if letterCount is 26)
+  // update displays (you asked to keep "/ 25" text)
   wordCounter.innerText = `Word count: ${words.length}`;
   lettersCounter.innerText = `(${letterCount} / 25)`;
 
-  // helper to start animation reliably and set color after animation finishes
+  // helper: reliably start an animation and set final color after it ends
   function triggerAnim(el, animName, finalColor) {
     if (!el) return;
-    // remove any existing animation to make restart reliable
+    // remove any existing animation
     el.style.animation = "none";
-    // force reflow so the browser registers the removal
+    // force reflow so restart is reliable
     void el.offsetWidth;
-    // start the requested animation
+    // start animation
     el.style.animation = `${animName} 0.5s ease-in-out forwards`;
-    // ensure we remove any attached handler first
-    el.removeEventListener("animationend", el._onAnimEnd);
-    // attach handler that resets animation and applies final color
-    el._onAnimEnd = () => {
+    // remove any previous handler
+    if (el._animEndHandler) {
+      el.removeEventListener("animationend", el._animEndHandler);
+      el._animEndHandler = null;
+    }
+    // apply final color on animationend (so keyframe color steps are visible)
+    el._animEndHandler = () => {
       el.style.animation = "none";
       if (finalColor) el.style.color = finalColor;
-      el.removeEventListener("animationend", el._onAnimEnd);
-      el._onAnimEnd = null;
+      el.removeEventListener("animationend", el._animEndHandler);
+      el._animEndHandler = null;
     };
-    el.addEventListener("animationend", el._onAnimEnd);
+    el.addEventListener("animationend", el._animEndHandler);
   }
 
-  // WORD count transitions (14 is your threshold)
+  // WORD thresholds (14)
   if (words.length === 14 && previousCount !== 14) {
     triggerAnim(wordCounter, "spinClockwise", "lawngreen");
   } else if (words.length < 14 && previousCount >= 14) {
@@ -278,27 +280,28 @@
   } else if (words.length > 14 && previousCount <= 14) {
     triggerAnim(wordCounter, "redClockwise", "red");
   } else {
-    // no threshold change: ensure color matches current state (keeps UI coherent)
+    // no threshold crossing — keep color consistent
     if (words.length === 14) wordCounter.style.color = "lawngreen";
     else if (words.length > 14) wordCounter.style.color = "red";
     else wordCounter.style.color = "white";
   }
 
-  // LETTER count transitions (25 is the target; allow 26 overflow)
+  // LETTER thresholds (25 target, allow 26 overflow)
   if (letterCount === 25 && previousCountLetters !== 25) {
     triggerAnim(lettersCounter, "spinClockwise", "lawngreen");
   } else if (letterCount < 25 && previousCountLetters >= 25) {
-    // going from green -> below threshold: use the redCounterclockwise animation you defined
+    // went from >=25 down to <25
     triggerAnim(lettersCounter, "redCounterclockwise", "red");
   } else if (letterCount > 25 && previousCountLetters <= 25) {
-    // overflow happened: use neutral spin to indicate overflow
+    // overflow occurred (26)
     triggerAnim(lettersCounter, "spinClockwiseNeutral", "white");
   } else {
-    // keep color consistent when no threshold-crossing event occurred
+    // no threshold crossing — keep color consistent
     if (letterCount >= 25) lettersCounter.style.color = "lawngreen";
     else lettersCounter.style.color = "red";
   }
 }
+
 
 
 
@@ -377,6 +380,7 @@
     </script>
 </body>
 </html>
+
 
 
 
