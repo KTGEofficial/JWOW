@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDEFG Response Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #3347DA;
+            color: white;
+        }
+
+        span {
+            font-weight: bold;
+        }
+
+        #inputBox {
+            font-size: 1.5rem;
+            padding: 10px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        #letters {
+            font-size: 2rem;
+            letter-spacing: 5px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+            #letters span {
+                display: inline-block;
+                position: absolute;
+                transition: transform 0.5s ease-in-out, color 0.5s linear;
+                transform-origin: center;
+                color: white;
+            }
+
+        #wordCounter {
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        @keyframes spinClockwise {
+            0% {
+                transform: translateX(var(--translate-x)) rotateY(0deg);
+            }
+
+            33% {
+                transform: translateX(var(--translate-x)) rotateY(90deg);
+                color: lawngreen;
+            }
+
+            100% {
+                transform: translateX(var(--translate-x)) rotateY(360deg);
+                color: lawngreen;
+            }
+        }
+
+        @keyframes redClockwise {
+            0% {
+                transform: rotateY(0deg);
+            }
+
+            33% {
+                transform: rotateY(90deg);
+                color: red;
+            }
+
+            100% {
+                transform: rotateY(360deg);
+                color: red;
+            }
+        }
+
+        @keyframes spinCounterclockwise {
+            0% {
+                transform: translateX(var(--translate-x)) rotateY(360deg);
+            }
+
+            66% {
+                transform: translateX(var(--translate-x)) rotateY(90deg);
+                color: white;
+            }
+
+            100% {
+                transform: translateX(var(--translate-x)) rotateY(0deg);
+                color: white;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translateX(var(--translate-x)) scale(1);
+            }
+
+            50% {
+                transform: translateX(var(--translate-x)) scale(1.5);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>CDEFG Response Checker</h1>
+    <h2 id="prompt">Retrieving prompt....</h2>
+    <p id="wordCounter">Word count: 0</p>
+    <p id="lettersCounter">(0 / 25)</p>
+    <input type="text" id="inputBox" placeholder="Type here..." style="width: 840px;">
+    <label for="order">Sort Order:</label>
+    <select id="order">
+        <option value="alphabetical">Alphabetical</option>
+        <option value="qwerty">Keyboard Order</option>
+        <option value="textFreq">Text Frequency</option>
+        <option value="dictFreq">Dictionary Frequency</option>
+        <option value="ewowFreq">EWOW Frequency</option>
+        <option value="abcdeFreq">ABCDE Frequency</option>
+    </select>
+    <label for="reverse">Reverse:</label>
+    <input type="checkbox" id="reverse">
+    <div id="letters"></div>
+    <script>
+        const orders = {
+            alphabetical: "abcdefghijklmnopqrstuvwxyz",
+            qwerty: "qwertyuiopasdfghjklzxcvbnm",
+            textFreq: "etaoinshrdlcumwfgypbvkjxqz",
+            dictFreq: "esiarntolcdugpmhbyfvkwzxjq",
+            ewowFreq: "etoainsrldhumcwygpfbvkxjzq",
+            abcdeFreq: "notreadybcfghijklmpqsuvwxz"
+        };
+        function parsePrompt(str) {
+            const index = str.indexOf(" ");
+            
+            if (index === -1) {
+                return "Error: Prompt data might be corrupted";
+            }
+
+            if (isNaN(parseInt(str.slice(0, index), 10))) {
+                if (str.trim().startsWith('E') === True) {
+                    return str;
+                } else {
+                    return "Error: Prompt data might be corrupted";
+                }
+            } else {
+                return `Prompt ${str.slice(0, index)}: ${str.slice(index + 1)}`;
+            }
+        }
+        document.getElementById("lettersCounter").style.color = "red";
+        const container = document.getElementById("letters");
+        const inputBox = document.getElementById("inputBox");
+        const wordCounter = document.getElementById("wordCounter"); const lettersCounter = document.getElementById("lettersCounter");
+        const alphabet = "abcdefghijklmnopqrstuvwxyz";
+        const letterSpans = {};
+
+        const url = "https://script.google.com/macros/s/AKfycbyvx4NaNw17glaj95utUxHkNZZsFwNqaDvdJiBQ_7AUGQy7mWFVxjb8oZpX3GKbwhXN/exec";
+
+        (async () => {
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (Object.keys(result).length === 1 && result.hasOwnProperty('prompt')) {
+                    document.getElementById("prompt").innerText = parsePrompt(result.prompt);
+                } else {
+                    document.getElementById("prompt").innerText = "Error retrieving prompt: Can not retrieve prompt from external script!";
+                }
+            } catch (error) {
+                console.error("Error retrieving prompt:", error);
+            }
+        })();
+
+        wordCounter.style.setProperty('--translate-x', 0);
+
+        // Initialize letter display
+        alphabet.split("").forEach((char, index) => {
+            let span = document.createElement("span");
+            const letterSpacing = container.clientWidth / 37.8;
+            const newX = (index * letterSpacing) - ((26 / 2) - 0.5) * letterSpacing;
+            span.innerText = char;
+            span.style.transform = `translateX(${newX}px)`;
+            span.style.setProperty('--translate-x', `${newX}px`);
+            container.appendChild(span);
+            letterSpans[char] = span;
+        });
+
+        let currentText = "";
+
+        function countPangramability(input, alphabet) {
+            const inputSet = new Set(input.toLowerCase());
+            const alphabetSet = new Set(alphabet.toLowerCase());
+
+            let count = 0;
+            for (const char of alphabetSet) {
+                if (inputSet.has(char)) {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        // Update word count
+        function updateWordCount(text) {
+            const words = text.trim().split(/\s+/).filter(word => word.match(/[a-z0-9]/i)); const letterCount = countPangramability(text, alphabet)
+            let previousCountLetters;
+            // Extract the previous count from the innerText of the wordCounter element
+            const previousCount = parseInt(wordCounter.innerText.split(":")[1].trim(), 10) || 0;
+            const match = text.trim().match(/\((\d+)\s*\/\s*\d+\)/);
+            if (match) {
+                previousCountLetters = parseInt(match[1], 10);
+            }
+            // Update the word counter display
+            wordCounter.innerText = `Word count: ${words.length}`; lettersCounter.innerText = `(${letterCount} / 25)`;
+
+            // Apply animations based on word count changes
+            if (words.length === 14 && previousCount !== 14) {
+                // Trigger spinClockwise animation
+                wordCounter.style.animation = "spinClockwise 0.5s ease-in-out forwards";
+                setTimeout(() => (wordCounter.style.animation = "none"), 500);
+                wordCounter.style.color = "lawngreen";
+            } else if (words.length < 14 && previousCount >= 14) {
+                wordCounter.style.animation = "spinCounterclockwise 0.5s ease-in-out forwards";
+                wordCounter.style.color = "white";
+                setTimeout(() => (wordCounter.style.animation = "none"), 500);
+            } else if (words.length > 14 && previousCount <= 14) {
+                wordCounter.style.animation = "redClockwise 0.5s ease-in-out forwards";
+                wordCounter.style.color = "red";
+                setTimeout(() => (wordCounter.style.animation = "none"), 500);
+            }
+            if (letterCount === 25 && previousCountLetters !== 25) {
+                // Trigger spinClockwise animation
+                lettersCounter.style.animation = "spinClockwise 0.5s ease-in-out forwards";
+                setTimeout(() => (lettersCounter.style.animation = "none"), 500);
+                lettersCounter.style.color = "lawngreen";
+            } else if (letterCount < 25 && previousCountLetters >= 25) {
+                lettersCounter.style.animation = "spinCounterclockwise 0.5s ease-in-out forwards";
+                lettersCounter.style.color = "red";
+                setTimeout(() => (lettersCounter.style.animation = "none"), 500);
+            } else if (letterCount > 25 && previousCountLetters <= 25) {
+                lettersCounter.style.animation = "redClockwise 0.5s ease-in-out forwards";
+                lettersCounter.style.color = "white";
+                setTimeout(() => (lettersCounter.style.animation = "none"), 500);
+            }
+        }
+
+        // Reordering letters based on the selected order
+        function updateOrder() {
+            const selectedOrder = document.getElementById("order").value;
+            const reverse = document.getElementById("reverse").checked;
+            const sortedLetters = orders[selectedOrder].split("");
+
+            if (reverse) sortedLetters.reverse();
+
+            sortedLetters.forEach((char, index) => {
+                const span = letterSpans[char];
+                const letterSpacing = container.clientWidth / 37.8;
+                const newX = (index * letterSpacing) - ((26 / 2) - 0.5) * letterSpacing;
+                span.style.setProperty('--translate-x', `${newX}px`);
+                span.style.transform = `translateX(${newX}px)`;
+            });
+        }
+
+        document.getElementById("order").addEventListener("change", updateOrder);
+        document.getElementById("reverse").addEventListener("change", updateOrder);
+
+        // Handle typing effects
+        inputBox.addEventListener("input", function () {
+            const newText = inputBox.value.toLowerCase();
+            updateWordCount(newText);
+
+            newText.split("").forEach(letter => {
+                if (alphabet.includes(letter) && !currentText.includes(letter)) {
+                    let span = letterSpans[letter];
+                    span.style.animation = "none";
+                    span.offsetHeight; // Force reflow to restart animation
+                    span.style.animation = "spinClockwise 0.5s ease-in-out forwards";
+                    span.style.color = "lawngreen";
+                    setTimeout(() => span.style.animation = "none", 500);
+                }
+            });
+
+            currentText.split("").forEach(letter => {
+                if (alphabet.includes(letter) && !newText.includes(letter)) {
+                    let span = letterSpans[letter];
+                    span.style.animation = "none";
+                    span.offsetHeight; // Force reflow
+                    span.style.animation = "spinCounterclockwise 0.5s ease-in-out forwards";
+                    span.style.color = "white";
+                    setTimeout(() => span.style.animation = "none", 500);
+                }
+            });
+
+            currentText = newText;
+        });
+
+        // Pulsing animation on keydown
+        document.addEventListener("keydown", function (event) {
+            const key = event.key.toLowerCase();
+            if (alphabet.includes(key)) {
+                const span = letterSpans[key];
+                if (!span.style.animation.includes("spinClockwise") || !span.style.animation.includes("spinCounterclockwise")) {
+                    span.style.animation = "none";
+                    span.offsetHeight; // Force reflow
+                    span.style.animation = "pulse 0.3s ease-in-out";
+
+                }
+            }
+        });
+
+        function adjustInputWidth() {
+            inputBox.style.width = `${container.clientWidth / 1.8}px`;
+        }
+
+        window.addEventListener("resize", adjustInputWidth);
+        window.addEventListener("load", adjustInputWidth);
+
+
+    </script>
+</body>
+</html>

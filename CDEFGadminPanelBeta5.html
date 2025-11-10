@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secret Prompt Rewriter</title>
+</head>
+<body>
+    <h2>Change Prompt</h2>
+    <form id="macroForm" onsubmit="submitToMacro(event)">
+        <label for="numberInput">What prompt number in CDEFG is this?</label>
+        <input type="number" id="numberInput" name="numberInput" required><br><br>
+
+        <label for="textInput">What is the prompt?</label>
+        <input type="text" id="textInput" name="textInput" required><br><br>
+
+        <label for="passwordInput">What is your confirmation password?</label>
+        <input type="password" id="passwordInput" name="passwordInput" required><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        async function submitToMacro(event) {
+            event.preventDefault();
+
+            const number = encodeURIComponent(document.getElementById('numberInput').value);
+            const text = encodeURIComponent(document.getElementById('textInput').value);
+            const password = encodeURIComponent(document.getElementById('passwordInput').value);
+
+            const prompt = `${number}%20${text}`;
+            const url = `https://script.google.com/macros/s/AKfycbyvx4NaNw17glaj95utUxHkNZZsFwNqaDvdJiBQ_7AUGQy7mWFVxjb8oZpX3GKbwhXN/exec?password=${password}&prompt=${prompt}`;
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (Object.keys(result).length === 1 && result.hasOwnProperty('prompt')) {
+                    alert("Error: The wrong part of the CDEFG macro has been accessed. Or, this is from another macro instead.");
+                } else if (
+                    Object.keys(result).length === 2 &&
+                    result.hasOwnProperty('success') &&
+                    result.hasOwnProperty('message')
+                ) {
+                    alert(result.message);
+                } else {
+                    alert("Client Error: A macro other than the CDEFG macro has been accessed.");
+                }
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
